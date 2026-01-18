@@ -1,5 +1,6 @@
-import { getUserAndRepos } from "../lib/github/rest.js";
-import { computeStats } from "../lib/stats/computeStats.js";
+import { fetchGitHubGraphQL } from "../lib/github/graphql.js";
+import { USER_STATS_QUERY } from "../lib/github/queries.js";
+import { computeStatsFromGraphQL } from "../lib/stats/computeStats.js";
 import { renderStatsSVG } from "../lib/svg/renderStats.js";
 
 export default async function handler(req, res) {
@@ -7,15 +8,18 @@ export default async function handler(req, res) {
   const username = url.searchParams.get("username");
 
   try {
-    const { user, repos } = await getUserAndRepos(username);
-    const stats = computeStats(user, repos);
+    const data = await fetchGitHubGraphQL(
+      USER_STATS_QUERY,
+      { username }
+    );
+
+    const stats = computeStatsFromGraphQL(data);
     const svg = renderStatsSVG(stats);
 
     res.setHeader("Content-Type", "image/svg+xml");
     res.setHeader("Cache-Control", "public, max-age=86400");
     res.end(svg);
   } catch (err) {
-    res.setHeader("Content-Type", "image/svg+xml");
-    res.end(`<svg><text>User not found</text></svg>`);
+    res.end(`<svg><text>Error fetching stats</text></svg>`);
   }
 }
