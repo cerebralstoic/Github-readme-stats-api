@@ -2,6 +2,7 @@ import { fetchGitHubGraphQL } from "../lib/github/graphql.js";
 import { USER_STATS_QUERY } from "../lib/github/queries.js";
 import { computeStatsFromGraphQL } from "../lib/stats/computeStats.js";
 import { renderStatsSVG } from "../lib/svg/renderStats.js";
+
 export default async function statsHandler(req, res) {
   const url = new URL(req.originalUrl || req.url, "http://localhost");
 
@@ -15,24 +16,40 @@ export default async function statsHandler(req, res) {
   }
 
   try {
-    const data = await fetchGitHubGraphQL(USER_STATS_QUERY, { username });
+  const to = new Date();
+const from = new Date();
+from.setFullYear(to.getFullYear() - 1);
+
+const data = await fetchGitHubGraphQL(
+  USER_STATS_QUERY,
+  {
+    username,
+    from: from.toISOString(),
+    to: to.toISOString()
+  }
+);
+
     const stats = computeStatsFromGraphQL(data);
+    console.log(
+  "reposContributedTo:",
+  data.user.repositoriesContributedTo
+);
 
     const svg = renderStatsSVG(stats, style);
 
     res.setHeader("Content-Type", "image/svg+xml");
     res.setHeader("Cache-Control", "public, max-age=21600");
     res.end(svg);
-  } catch (err) {
+  }  catch (err) {
   res.setHeader("Content-Type", "image/svg+xml");
   res.end(`
-<svg width="800" height="120" xmlns="http://www.w3.org/2000/svg">
+<svg width="900" height="120" xmlns="http://www.w3.org/2000/svg">
   <rect width="100%" height="100%" fill="#0d1117"/>
   <text x="10" y="30" fill="#ff5555" font-size="14">
-    ${err?.message || "Unknown error"}
+    ${err?.message}
   </text>
 </svg>
-  `);
+`);
 }
 
 }
