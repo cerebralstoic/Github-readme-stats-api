@@ -16,25 +16,16 @@ export default async function statsHandler(req, res) {
   }
 
   try {
-  const to = new Date();
-const from = new Date();
-from.setFullYear(to.getFullYear() - 1);
 
-const data = await fetchGitHubGraphQL(
-  USER_STATS_QUERY,
-  {
-    username,
-    from: from.toISOString(),
-    to: to.toISOString()
-  }
-);
+    const data = await fetchGitHubGraphQL(
+      USER_STATS_QUERY,
+      {
+        username,
+      }
+    );
 
     const stats = computeStatsFromGraphQL(data);
-    console.log(
-  "reposContributedTo:",
-  data.user.repositoriesContributedTo
-);
-
+    console.log(`[STATS] ${username} total commits (all-time):`, stats.commits);
     const svg = renderStatsSVG(stats, style);
 
     res.setHeader("Content-Type", "image/svg+xml");
