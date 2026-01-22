@@ -2,6 +2,7 @@ import { fetchGitHubGraphQL } from "../lib/github/graphql.js";
 import { USER_STATS_QUERY } from "../lib/github/queries.js";
 import { computeStatsFromGraphQL } from "../lib/stats/computeStats.js";
 import { renderStatsSVG } from "../lib/svg/renderStats.js";
+import { fetchAllCommitCount } from "../lib/stats/allcommits.js";
 
 export default async function statsHandler(req, res) {
   const url = new URL(req.originalUrl || req.url, "http://localhost");
@@ -23,9 +24,14 @@ export default async function statsHandler(req, res) {
         username,
       }
     );
-
+    const allCommits = await fetchAllCommitCount(
+        username,
+        process.env.GITHUB_TOKEN
+      );
     const stats = computeStatsFromGraphQL(data);
     console.log(`[STATS] ${username} total commits (all-time):`, stats.commits);
+    stats.allCommits = allCommits;
+    console.log(`[STATS] ${username} total commits (via Search API):`, allCommits);
     const svg = renderStatsSVG(stats, style);
 
     res.setHeader("Content-Type", "image/svg+xml");
