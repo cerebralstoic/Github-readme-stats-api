@@ -2,13 +2,17 @@ import { fetchGitHubGraphQL } from "../lib/github/graphql.js";
 import { USER_STATS_QUERY } from "../lib/github/queries.js";
 import { computeStatsFromGraphQL } from "../lib/stats/computeStats.js";
 import { renderStatsSVG } from "../lib/svg/renderStats.js";
+import { THEMES } from "../lib/themes/themes.js";
 import { fetchAllCommitCount } from "../lib/stats/allcommits.js";
 
 export default async function statsHandler(req, res) {
+  
   const url = new URL(req.originalUrl || req.url, "http://localhost");
 
   const username = url.searchParams.get("username");
   const style = url.searchParams.get("style") || "gradient";
+  const themeName = url.searchParams.get("theme") || "default";
+  const theme = THEMES[themeName] || THEMES.default;
 
   if (!username) {
     res.setHeader("Content-Type", "image/svg+xml");
@@ -32,7 +36,7 @@ export default async function statsHandler(req, res) {
     console.log(`[STATS] ${username} total commits (all-time):`, stats.commits);
     stats.allCommits = allCommits;
     console.log(`[STATS] ${username} total commits (via Search API):`, allCommits);
-    const svg = renderStatsSVG(stats, style);
+    const svg = renderStatsSVG(stats, style, theme);
 
     res.setHeader("Content-Type", "image/svg+xml");
     res.setHeader("Cache-Control", "public, max-age=21600");
