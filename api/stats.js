@@ -4,46 +4,49 @@ import { computeStatsFromGraphQL } from "../lib/stats/computeStats.js";
 import { renderStatsSVG } from "../lib/svg/renderStats.js";
 import { THEMES } from "../lib/themes/themes.js";
 import { fetchAllCommitCount } from "../lib/stats/allcommits.js";
+import { getCache, setCache } from "../lib/cache/svgCache.js";
 
 export default async function statsHandler(req, res) {
-  
   const url = new URL(req.originalUrl || req.url, "http://localhost");
 
   const username = url.searchParams.get("username");
   const style = url.searchParams.get("style") || "gradient";
   const themeName = url.searchParams.get("theme") || "default";
+  const includeAllCommits = url.searchParams.get("include_all_commits") === "true";
   const theme = THEMES[themeName] || THEMES.default;
 
   if (!username) {
-    res.setHeader("Content-Type", "image/svg+xml");
     res.end(`<svg><text x="10" y="20">Missing username</text></svg>`);
     return;
   }
 
-  try {
+  const cacheKey = `stats:${username}:${style}:${themeName}:all=${includeAllCommits}`;
+  const cachedSVG = getCache(cacheKey);
 
-    const data = await fetchGitHubGraphQL(
-      USER_STATS_QUERY,
-      {
-        username,
-      }
-    );
-    const allCommits = await fetchAllCommitCount(
-        username,
-        process.env.GITHUB_TOKEN
-      );
+  if (cachedSVG) {
+    res.end(cachedSVG);
+    return;
+  }
+
+  try {
+    const data = await fetchGitHubGraphQL(USER_STATS_QUERY, { username });
+
     const stats = computeStatsFromGraphQL(data);
-    console.log(`[STATS] ${username} total commits (all-time):`, stats.commits);
-    stats.allCommits = allCommits;
-    console.log(`[STATS] ${username} total commits (via Search API):`, allCommits);
+    if(includeAllCommits) {
+      const allCommits = await fetchAllCommitCount(
+      username,
+      process.env.GITHUB_TOKEN
+    );
+      stats.commits = allCommits;
+    }
+    
+
     const svg = renderStatsSVG(stats, style, theme);
 
-    res.setHeader("Content-Type", "image/svg+xml");
-    res.setHeader("Cache-Control", "public, max-age=21600");
+    setCache(cacheKey, svg);
     res.end(svg);
-  }  catch (err) {
-  res.setHeader("Content-Type", "image/svg+xml");
-  res.end(`
+  } catch (err) {
+    res.end(`
 <svg width="900" height="120" xmlns="http://www.w3.org/2000/svg">
   <rect width="100%" height="100%" fill="#0d1117"/>
   <text x="10" y="30" fill="#ff5555" font-size="14">
@@ -51,6 +54,5 @@ export default async function statsHandler(req, res) {
   </text>
 </svg>
 `);
-}
-
+  }
 }
