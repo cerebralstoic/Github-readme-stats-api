@@ -110,7 +110,7 @@ To include **all commits across repositories**:
 
 ---
 
-## 🧠 Top Languages Card
+##  Top Languages Card
 
 ```md
 ![Top Languages](https://github-readme-stats-api-omega.vercel.app/api/stats?username=cerebralstoic&style=top-languages)
@@ -118,7 +118,7 @@ To include **all commits across repositories**:
 
 ---
 
-## 🧾 Profile Summary Card
+##  Profile Summary Card
 
 ```md
 ![Profile Summary](https://github-readme-stats-api-omega.vercel.app/api/stats?username=cerebralstoic&style=summary)
@@ -157,3 +157,41 @@ MIT License
 | Top Languages | Summary |
 |--------------|---------|
 | ![](assets/screenshot/toplang.png) | ![](assets/screenshot/summary.png) |
+
+
+
+##  Development Notes
+
+This project is a **serverless API** and does **not** run like a traditional Node/Express server.
+
+### Local Development
+
+1. Install Vercel CLI:
+   ```bash
+   npm install -g vercel
+   
+2. Login to Vercel:
+
+   ```bash
+   vercel login
+   ```
+
+3. Create `.env.local` in the project root:
+
+   ```
+   GITHUB_TOKEN=ghp_your_token_here
+   ```
+
+4. Start local serverless environment:
+
+   ```bash
+   vercel dev
+   ```
+
+5. Open in browser:
+
+   ```
+   http://localhost:3000/api/stats?username=cerebralstoic
+   ```
+
+---
