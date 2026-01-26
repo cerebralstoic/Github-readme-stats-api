@@ -5,14 +5,22 @@ import { renderStatsSVG } from "../lib/svg/renderStats.js";
 import { THEMES } from "../lib/themes/themes.js";
 import { fetchAllCommitCount } from "../lib/stats/allcommits.js";
 import { getCache, setCache } from "../lib/cache/svgCache.js";
+import { rateLimit } from "../middleware/rateLimit.js";
+import { svgHeaders } from "../middleware/headers.js";
 
-export default async function statsHandler(req, res) {
-  const url = new URL(req.originalUrl || req.url, "http://localhost");
+export default async function handler(req, res) {
+  try {
+    rateLimit(req, res, () => {});
+    svgHeaders(req, res, () => {});
+  } catch {
+    return;
+  }
 
-  const username = url.searchParams.get("username");
-  const style = url.searchParams.get("style") || "gradient";
-  const themeName = url.searchParams.get("theme") || "default";
-  const includeAllCommits = url.searchParams.get("include_all_commits") === "true";
+  const username = req.query.username;
+  const style = req.query.style || "stats";
+  const themeName = req.query.theme || "default";
+  const includeAllCommits = req.query.include_all_commits === "true";
+
   const theme = THEMES[themeName] || THEMES.default;
 
   if (!username) {
@@ -21,25 +29,23 @@ export default async function statsHandler(req, res) {
   }
 
   const cacheKey = `stats:${username}:${style}:${themeName}:all=${includeAllCommits}`;
-  const cachedSVG = getCache(cacheKey);
+  const cached = getCache(cacheKey);
 
-  if (cachedSVG) {
-    res.end(cachedSVG);
+  if (cached) {
+    res.end(cached);
     return;
   }
 
   try {
     const data = await fetchGitHubGraphQL(USER_STATS_QUERY, { username });
-
     const stats = computeStatsFromGraphQL(data);
-    if(includeAllCommits) {
-      const allCommits = await fetchAllCommitCount(
-      username,
-      process.env.GITHUB_TOKEN
-    );
-      stats.commits = allCommits;
+
+    if (includeAllCommits) {
+      stats.commits = await fetchAllCommitCount(
+        username,
+        process.env.GITHUB_TOKEN
+      );
     }
-    
 
     const svg = renderStatsSVG(stats, style, theme);
 
@@ -50,7 +56,7 @@ export default async function statsHandler(req, res) {
 <svg width="900" height="120" xmlns="http://www.w3.org/2000/svg">
   <rect width="100%" height="100%" fill="#0d1117"/>
   <text x="10" y="30" fill="#ff5555" font-size="14">
-    ${err?.message}
+    ${err.message}
   </text>
 </svg>
 `);
