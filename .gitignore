@@ -21,3 +21,4 @@ logs/
 pids/
 *.pid
 *.seed
+.vercel
