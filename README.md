@@ -57,6 +57,7 @@ Available styles:
 
 ```
 stats
+badge
 insight
 top-languages
 summary
@@ -66,6 +67,14 @@ Example:
 
 ```md
 ![Stats](https://github-readme-stats-api-omega.vercel.app/api/stats?username=cerebralstoic&style=insight)
+```
+
+---
+
+##  Badge Card
+
+```md
+![Badge Stats](https://github-readme-stats-api-omega.vercel.app/api/stats?username=cerebralstoic&style=badge)
 ```
 
 ---
