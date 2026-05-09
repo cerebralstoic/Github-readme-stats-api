@@ -58,6 +58,7 @@ Available styles:
 ```
 stats
 badge
+radar
 insight
 top-languages
 summary
@@ -75,6 +76,14 @@ Example:
 
 ```md
 ![Badge Stats](https://github-readme-stats-api-omega.vercel.app/api/stats?username=cerebralstoic&style=badge)
+```
+
+---
+
+##  Radar Card
+
+```md
+![Radar Stats](https://github-readme-stats-api-omega.vercel.app/api/stats?username=cerebralstoic&style=radar)
 ```
 
 ---
